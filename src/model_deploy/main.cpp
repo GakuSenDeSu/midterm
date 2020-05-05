@@ -1,7 +1,12 @@
+#include "mbed.h"
+// Music library
+#include <cmath>
+#include "DA7212.h"
+// Accelerometer library
 #include "accelerometer_handler.h"
 #include "config.h"
 #include "magic_wand_model_data.h"
-
+// Tensorflow library
 #include "tensorflow/lite/c/common.h"
 #include "tensorflow/lite/micro/kernels/micro_ops.h"
 #include "tensorflow/lite/micro/micro_error_reporter.h"
@@ -9,6 +14,55 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
+//gesture parameters
+int gesture_a;
+int gesture_b;
+
+//Event parameters
+int event_num = 1;
+DigitalOut led1(LED1);
+DigitalOut led2(LED2);
+InterruptIn sw2(SW2);
+InterruptIn sw3(SW3);
+EventQueue queue1(32 * EVENTS_EVENT_SIZE);
+EventQueue queue2(32 * EVENTS_EVENT_SIZE);
+EventQueue queue3(32 * EVENTS_EVENT_SIZE);
+Thread thread1;
+Thread thread2;
+Thread thread3;
+
+void add_thread(){
+    led1 = 0; //red light
+    led2 = 1;
+    event_num++;
+}
+
+void reduce_thread(){
+    led1 = 1;
+    led2 = 0; //green light
+    event_num--;
+}
+
+void switch_event(){
+    switch(event_num){
+        case 1:
+
+    }
+}
+
+
+int main() {
+    thread1.start(callback(&queue1, &EventQueue::dispatch_forever));
+    thread2.start(callback(&queue2, &EventQueue::dispatch_forever));
+    thread3.start(callback(&queue3, &EventQueue::dispatch_forever));
+    // sw2 is used to get to the next step
+    sw2.rise(queue1.event(add_thread));
+    // sw3 is used to go back to the previous step
+    sw3.rise(queue2.event(reduce_thread));
+    Ticker eventTicker;
+    eventTicker.attach(&queue3.event(&switch_event),1.0f);
+  
+}
 
 // Return the result of the last prediction
 int PredictGesture(float* output) {
@@ -152,13 +206,6 @@ int gesture_test(int argc, char* argv[]){
     should_clear_buffer = gesture_index < label_num;
 
     // Produce an output
-    if (gesture_index < label_num) {
-      error_reporter->Report(config.output_message[gesture_index]);
-    }
+    // Maybe it doesn't matter? 
   }
-}
-
-int main() {
-
-  
 }
