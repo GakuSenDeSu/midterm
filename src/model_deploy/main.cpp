@@ -50,9 +50,8 @@ int PredictGesture(float* output) {
   return this_predict;
 }
 
-int main(int argc, char* argv[]) {
-
-  // Create an area of memory to use for input, output, and intermediate arrays.
+int gesture_test(int argc, char* argv[]){
+    // Create an area of memory to use for input, output, and intermediate arrays.
   // The size of this will depend on the model you're using, and may need to be
   // determined by experimentation.
   constexpr int kTensorArenaSize = 60 * 1024;
@@ -157,4 +156,9 @@ int main(int argc, char* argv[]) {
       error_reporter->Report(config.output_message[gesture_index]);
     }
   }
+}
+
+int main() {
+
+  
 }
