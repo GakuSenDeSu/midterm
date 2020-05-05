@@ -17,10 +17,12 @@
 // uLCD library
 #include "uLCD_4DGL.h"
 // Gesture parameters
-int gesture_a;
-int gesture_b;
+#define mode 3;
+#define scroll 3;
+EventQueue queue6(32 * EVENTS_EVENT_SIZE);
+Thread thread_gesture;
 // Event parameters
-int event_num = 1;
+int event_num = 0;
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
 InterruptIn sw2(SW2);
@@ -31,11 +33,18 @@ EventQueue queue3(32 * EVENTS_EVENT_SIZE);
 Thread thread_add;
 Thread thread_reduce;
 Thread thread_switch;
-// Music event
+// Music parameter
 DA7212 audio;
+Serial pc(USBTX, USBRX);
 int16_t waveform[kAudioTxBufferSize];
 EventQueue queue4(32 * EVENTS_EVENT_SIZE);
 Thread thread_song;
+char serialInBuffer[bufferLength];
+int serialCount = 0;
+int idC = 0;
+#define song_num 3; //how many songs, address of songs
+int oldsong_num;
+// Should Get from python, but I haven't solve out.
 int song[42] = {
   261, 261, 392, 392, 440, 440, 392,
   349, 349, 330, 330, 294, 294, 261,
@@ -53,6 +62,11 @@ int noteLength[42] = {
   1, 1, 1, 1, 1, 1, 2
 };
 
+// uLCD parameter
+EventQueue queue5(32 * EVENTS_EVENT_SIZE);
+Thread thread_uLCD;
+uLCD_4DGL uLCD(D1, D0, D2); // serial tx, serial rx, reset pin;
+
 void add_thread(){
     led1 = 0; //red light
     led2 = 1;
@@ -65,43 +79,367 @@ void reduce_thread(){
     event_num--;
 }
 
-void switch_event(){
-    switch(event_num){
+void uLCD_print(){
+    uLCD.cls();
+    switch (event_num){
+        case 0:
+        uLCD.printf("\nSTART...\n");
+        break;
         case 1:
-        thread_song.start(callback(&queue4, &EventQueue::dispatch_forever));
+        uLCD.printf("\nLittle Star\n"); // Song name
+        uLCD.printf("\n A famous song...");// Song imformation
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf(">|");
+        break;
+        case 2:
+        switch (mode){
+            case 0:
+            uLCD.background_color(0xFFFFFF)//song list title is white 
+            uLCD.printf("\nSong List\n");
+            uLCD.printf("\n1. Little Star\n");
+            uLCD.printf("\n2. Quicker\n");
+            uLCD.printf("\n3. Slower\n");
+            uLCD.text_width(2); //2X size text
+            uLCD.text_height(2);
+            uLCD.color(BLUE);
+            uLCD.locate(1,2);
+            uLCD.printf("<<  >|  >>");break;
+            case 1:
+            uLCD.printf("\nSong List\n");
+            uLCD.printf("\n1. Little Star\n");
+            uLCD.printf("\n2. Quicker\n");
+            uLCD.printf("\n3. Slower\n");
+            uLCD.text_width(2); //2X size text
+            uLCD.text_height(2);
+            uLCD.color(BLUE);
+            uLCD.locate(1,2);
+            uLCD.background_color(0xFFFFFF)//<< is white
+            uLCD.printf("<<");
+            uLCD.locate(1,3);
+            uLCD.printf("  >|  >>");break;
+            case 2:
+            uLCD.printf("\nSong List\n");
+            uLCD.printf("\n1. Little Star\n");
+            uLCD.printf("\n2. Quicker\n");
+            uLCD.printf("\n3. Slower\n");
+            uLCD.text_width(2); //2X size text
+            uLCD.text_height(2);
+            uLCD.color(BLUE);
+            uLCD.locate(1,2);
+            uLCD.printf("<<  >|  ");
+            uLCD.locate(1,4);
+            uLCD.background_color(0xFFFFFF)//>> is white
+            uLCD.printf(">>");break;
+        }break;
+        case 3:
+        switch(mode){
+            case 0://see what song is white
+            switch(song_num){
+                case 0:
+                uLCD.printf("\nSong List\n");
+                uLCD.background_color(0xFFFFFF)//1. is white
+                uLCD.printf("\n1. Little Star\n");
+                uLCD.printf("\n2. Quicker\n");
+                uLCD.printf("\n3. Slower\n");
+                uLCD.text_width(2); //2X size text
+                uLCD.text_height(2);
+                uLCD.color(BLUE);
+                uLCD.locate(1,2);
+                uLCD.printf("<<  >|  >>");break;
+                case 1:
+                uLCD.printf("\nSong List\n");
+                uLCD.printf("\n1. Little Star\n");
+                uLCD.background_color(0xFFFFFF)//2. is white
+                uLCD.printf("\n2. Quicker\n");
+                uLCD.printf("\n3. Slower\n");
+                uLCD.text_width(2); //2X size text
+                uLCD.text_height(2);
+                uLCD.color(BLUE);
+                uLCD.locate(1,2);
+                uLCD.printf("<<  >|  >>");break;
+                case 3:
+                uLCD.printf("\nSong List\n");
+                uLCD.printf("\n1. Little Star\n");
+                uLCD.printf("\n2. Quicker\n");
+                uLCD.background_color(0xFFFFFF)//3. is white
+                uLCD.printf("\n3. Slower\n");
+                uLCD.text_width(2); //2X size text
+                uLCD.text_height(2);
+                uLCD.color(BLUE);
+                uLCD.locate(1,2);
+                uLCD.printf("<<  >|  >>");break;
+            }
+            break;
+            case 1:
+            uLCD.printf("\nSong List\n");
+            uLCD.printf("\n1. Little Star\n");
+            uLCD.printf("\n2. Quicker\n");
+            uLCD.printf("\n3. Slower\n");
+            uLCD.text_width(2); //2X size text
+            uLCD.text_height(2);
+            uLCD.color(BLUE);
+            uLCD.locate(1,2);
+            uLCD.background_color(0xFFFFFF)//<< is white
+            uLCD.printf("<<");
+            uLCD.locate(1,3);
+            uLCD.printf("  >|  >>");break;
+            case 2:
+            uLCD.printf("\nSong List\n");
+            uLCD.printf("\n1. Little Star\n");
+            uLCD.printf("\n2. Quicker\n");
+            uLCD.printf("\n3. Slower\n");
+            uLCD.text_width(2); //2X size text
+            uLCD.text_height(2);
+            uLCD.color(BLUE);
+            uLCD.locate(1,2);
+            uLCD.printf("<<  >|  ");
+            uLCD.locate(1,4);
+            uLCD.background_color(0xFFFFFF)//>> is white
+            uLCD.printf(">>");break;
+        }break;
+        case 4:
+        /*
+        switch (mode)
+        {
+            case 0:
+            //show song_list[song_num]info
+            break;
+            case 1:
+            //show song_list[oldsong_num]info
+            break;
+            case 2:
+            //show song_list[oldsong_num]info
+            break;
+        }
+        */
+       /*
+       case 5:
+       //need first or later, so not write here
+       break
+       */
+      /*
+      case 6:
+      //game; haven't any idea
+      */
+     /*
+     case 7:
+     //to restart game, same as case 5, not here
+     break;
+     */
+     }
+}
+
+void switch_event(){
+    queue5.call(uLCD_print);
+    queue6.call(gesture_test);
+    switch(event_num){
+        case 0:
+        queue4.call(loadSignalHandler);
+        event_num++;
+        break;
+        case 1:
+        /*
+        play song_list[song_num]
             for(int i = 0; i < 42; i++){
                 int length = noteLength[i];
                 while(length--){
                     // the loop below will play the note for the duration of 1s
-                    for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j){
-                        queue4.call(playNote, song[i]);}
+                    for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+                    {
+                        queue4.call(playNoteC(song[i]));
+                    }
                     if(length < 1) wait(1.0);
                 }
             }
-            break;
+            oldsong_num = song_num;
+        break;*/
         case 2:
-
-
+        stopPlayNoteC();
+        mode = gesture_index;
+        break;
+        case 3:
+        switch(mode){
+            case 0:
+            scroll = gesture_index;
+            switch (scroll){
+                case 1:
+                song_num = (song_num)-1;break;
+                case 2:
+                song_num = (song_num)+1;break;
+            }
+            if (scroll<0)
+            {
+                song_num = 0;
+            }
+            if (scroll>2)
+            {
+                song_num = 2;
+            }
+            case 1:
+            break;
+            case 2:
+            break;
+        }
+        break;
+        case 4:
+        switch(gesturea){
+            case 0:
+            switch (song_num){
+                case 0:
+                /*
+                play new song
+                song_list[song_num]???
+                
+                    for(int i = 0; i < 42; i++){
+                        int length = noteLength[i];
+                        while(length--){
+                        // the loop below will play the note for the duration of 1s
+                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+                        {
+                            queue4.call(playNoteC(song[i]));
+                        }
+                        if(length < 1) wait(1.0);
+                        }
+                    }*/
+                break;
+                case 1://Quicker
+                break;
+                case 2://Slower
+                break;
+            }break;
+            case 1:
+                i = i -10;
+                if (i<0)
+                {
+                    i = 0;
+                }
+                /*
+                play old song
+                song_list[oldsong_num]???
+                for(int i = 0; i < 42; i++){
+                        int length = noteLength[i];
+                        while(length--){
+                        // the loop below will play the note for the duration of 1s
+                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+                        {
+                            queue4.call(playNoteC(song[i]));
+                        }
+                        if(length < 1) wait(1.0);
+                        }
+                    }
+                */
+            break;
+            case 2:
+                i = i +10;
+                if (i>length(song))
+                {
+                    i = length(song) -1;
+                }
+                /*
+                play old song
+                song_list[oldsong_num]???
+                for(int i = 0; i < 42; i++){
+                        int length = noteLength[i];
+                        while(length--){
+                        // the loop below will play the note for the duration of 1s
+                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+                        {
+                            queue4.call(playNoteC(song[i]));
+                        }
+                        if(length < 1) wait(1.0);
+                        }
+                    }
+                */
+            break;
+        }
+        break;
+        case 5:
+        /*
+        uLCD.cls();
+        uLCD.printf("\nPlease wait...\n");
+        oldsong_num = song_num; //restore
+        event_num = event_num - 4;//go back to case2 and can start again
+        */
+       break;
+       case 6:
+       /*
+       //game, haven't any idea
+       if (event_num == 5 || event_num == 7){
+           break; //quit the game
+       }
+       */
+      break;
+      case 7:
+      /*
+      uLCD.cls();
+      uLCD.printf("\nPlease wait...\n");
+      event_num = event_num - 1;// go back to case 6, restart the game
+      */
+      break;
     }
+}
+
+void loadSignal(void)
+{
+  led2 = 0;
+  int i = 0;
+  serialCount = 0;
+  audio.spk.pause();
+  while(i < signalLength)
+  {
+    if(pc.readable())
+    {
+      serialInBuffer[serialCount] = pc.getc();
+      serialCount++;
+      if(serialCount == 5)
+      {
+        serialInBuffer[serialCount] = '\0';
+        signal[i] = (float) atof(serialInBuffer);
+        serialCount = 0;
+        i++;
+      }
+    }
+  }
+  led2 = 1;
 }
 
 void playNote(int freq)
 {
-  for(int i = 0; i < kAudioTxBufferSize; i++)
+    for (int i = 0; i < kAudioTxBufferSize; i++)
   {
-    waveform[i] = (int16_t) (sin((double)i * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
+    waveform[i] = (int16_t) (signal[(uint16_t) (i * freq * signalLength * 1. / kAudioSampleFrequency) % signalLength] * ((1<<16) - 1));
   }
-  audio.spk.play(waveform, kAudioTxBufferSize);
+  // the loop below will play the note for the duration of 1s
+  for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+  {
+    audio.spk.play(waveform, kAudioTxBufferSize);
+  }
 }
+
+void loadSignalHandler(void) {queue4.call(loadSignal);}
+
+void playNoteC(int i_val) {idC = queue4.call_every(1, playNote, i_val);}
+
+void stopPlayNoteC(void) {queue4.cancel(idC);}
+
 
 int main() {
     thread_add.start(callback(&queue1, &EventQueue::dispatch_forever));
     thread_reduce.start(callback(&queue2, &EventQueue::dispatch_forever));
     thread_switch.start(callback(&queue3, &EventQueue::dispatch_forever));
+    thread_song.start(callback(&queue4, &EventQueue::dispatch_forever));
+    thread_uLCD.start(callback(&queue5, &EventQueue::dispatch_forever));
+    thread_gesture.start(callback(&queue6, &EventQueue::dispatch_forever));
     // sw2 is used to get to the next step
     sw2.rise(queue1.event(add_thread));
     // sw3 is used to go back to the previous step
     sw3.rise(queue2.event(reduce_thread));
+    if (sw2 == 1 && sw3 == 1 ){
+        event_num == 6;
+    }
     // call switch_event every second, automatically defering to the eventThread
     Ticker eventTicker;
     eventTicker.attach(&queue3.event(&switch_event),1.0f);
