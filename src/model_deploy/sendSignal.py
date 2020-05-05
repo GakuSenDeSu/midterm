@@ -20,3 +20,28 @@ noteLength = np.array([
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2])
+Quiker = 0.5*np.array([
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2])
+Slower = 2*np.array([
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2])
+
+signalTable = [song, noteLength, song, Quicker, song, Slower]
+formatter = lambda x: "%.3f" % x
+serdev = '/dev/ttyACM0'
+s = serial.Serial(serdev)
+print("Sending signal ...")
+for data in signalTable:
+  s.write(bytes(formatter(data), 'UTF-8'))
+  time.sleep(waitTime)
+s.close()
+print("Signal sended")
