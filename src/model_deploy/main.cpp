@@ -14,11 +14,10 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
-//gesture parameters
+// Gesture parameters
 int gesture_a;
 int gesture_b;
-
-//Event parameters
+// Event parameters
 int event_num = 1;
 DigitalOut led1(LED1);
 DigitalOut led2(LED2);
@@ -27,9 +26,30 @@ InterruptIn sw3(SW3);
 EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 EventQueue queue2(32 * EVENTS_EVENT_SIZE);
 EventQueue queue3(32 * EVENTS_EVENT_SIZE);
-Thread thread1;
-Thread thread2;
-Thread thread3;
+Thread thread_add;
+Thread thread_reduce;
+Thread thread_switch;
+// Music event
+DA7212 audio;
+int16_t waveform[kAudioTxBufferSize];
+EventQueue queue4(32 * EVENTS_EVENT_SIZE);
+Thread thread_song;
+int song[42] = {
+  261, 261, 392, 392, 440, 440, 392,
+  349, 349, 330, 330, 294, 294, 261,
+  392, 392, 349, 349, 330, 330, 294,
+  392, 392, 349, 349, 330, 330, 294,
+  261, 261, 392, 392, 440, 440, 392,
+  349, 349, 330, 330, 294, 294, 261
+};
+int noteLength[42] = {
+  1, 1, 1, 1, 1, 1, 2,
+  1, 1, 1, 1, 1, 1, 2,
+  1, 1, 1, 1, 1, 1, 2,
+  1, 1, 1, 1, 1, 1, 2,
+  1, 1, 1, 1, 1, 1, 2,
+  1, 1, 1, 1, 1, 1, 2
+};
 
 void add_thread(){
     led1 = 0; //red light
@@ -46,22 +66,44 @@ void reduce_thread(){
 void switch_event(){
     switch(event_num){
         case 1:
+        thread_song.start(callback(&queue4, &EventQueue::dispatch_forever));
+            for(int i = 0; i < 42; i++){
+                int length = noteLength[i];
+                while(length--){
+                    // the loop below will play the note for the duration of 1s
+                    for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j){
+                        queue4.call(playNote, song[i]);}
+                    if(length < 1) wait(1.0);
+                }
+            }
+            break;
+        case 2:
+
 
     }
 }
 
+void playNote(int freq)
+{
+  for(int i = 0; i < kAudioTxBufferSize; i++)
+  {
+    waveform[i] = (int16_t) (sin((double)i * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
+  }
+  audio.spk.play(waveform, kAudioTxBufferSize);
+}
 
 int main() {
-    thread1.start(callback(&queue1, &EventQueue::dispatch_forever));
-    thread2.start(callback(&queue2, &EventQueue::dispatch_forever));
-    thread3.start(callback(&queue3, &EventQueue::dispatch_forever));
+    thread_add.start(callback(&queue1, &EventQueue::dispatch_forever));
+    thread_reduce.start(callback(&queue2, &EventQueue::dispatch_forever));
+    thread_switch.start(callback(&queue3, &EventQueue::dispatch_forever));
     // sw2 is used to get to the next step
     sw2.rise(queue1.event(add_thread));
     // sw3 is used to go back to the previous step
     sw3.rise(queue2.event(reduce_thread));
+    // call switch_event every second, automatically defering to the eventThread
     Ticker eventTicker;
     eventTicker.attach(&queue3.event(&switch_event),1.0f);
-  
+    while (1) {wait(1);}
 }
 
 // Return the result of the last prediction
