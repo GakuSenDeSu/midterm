@@ -14,6 +14,8 @@
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "tensorflow/lite/version.h"
+// uLCD library
+#include "uLCD_4DGL.h"
 // Gesture parameters
 int gesture_a;
 int gesture_b;
@@ -146,10 +148,10 @@ int PredictGesture(float* output) {
   return this_predict;
 }
 
-int gesture_test(int argc, char* argv[]){
+void gesture_test(){
     // Create an area of memory to use for input, output, and intermediate arrays.
-  // The size of this will depend on the model you're using, and may need to be
-  // determined by experimentation.
+    // The size of this will depend on the model you're using, and may need to be
+    // determined by experimentation.
   constexpr int kTensorArenaSize = 60 * 1024;
   uint8_t tensor_arena[kTensorArenaSize];
 
