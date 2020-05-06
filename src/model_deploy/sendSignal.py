@@ -35,7 +35,7 @@ Slower = 2*np.array([
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2])
 
-signalTable = [song, noteLength, song, Quicker, song, Slower]
+signalTable = [song, noteLength, "A famous and classic children's song.",song, Quicker, "A quicker version.", song, Slower, "A slower version."]
 formatter = lambda x: "%.3f" % x
 serdev = '/dev/ttyACM0'
 s = serial.Serial(serdev)

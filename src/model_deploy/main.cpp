@@ -45,22 +45,6 @@ int idC = 0;
 #define song_num 3; //how many songs, address of songs
 int oldsong_num;
 // Should Get from python, but I haven't solve out.
-int song[42] = {
-  261, 261, 392, 392, 440, 440, 392,
-  349, 349, 330, 330, 294, 294, 261,
-  392, 392, 349, 349, 330, 330, 294,
-  392, 392, 349, 349, 330, 330, 294,
-  261, 261, 392, 392, 440, 440, 392,
-  349, 349, 330, 330, 294, 294, 261
-};
-int noteLength[42] = {
-  1, 1, 1, 1, 1, 1, 2,
-  1, 1, 1, 1, 1, 1, 2,
-  1, 1, 1, 1, 1, 1, 2,
-  1, 1, 1, 1, 1, 1, 2,
-  1, 1, 1, 1, 1, 1, 2,
-  1, 1, 1, 1, 1, 1, 2
-};
 
 // uLCD parameter
 EventQueue queue5(32 * EVENTS_EVENT_SIZE);
@@ -223,6 +207,24 @@ void uLCD_print(){
       /*
       case 6:
       //game; haven't any idea
+      //load coor
+      for (i=0;i<42;i++)
+      {
+        int circle[i]=radom(1,2);
+      }
+      uLCD.
+      for (i = 0;i<42,i++)
+      {
+        if ( circle[i] == 1 ){
+          
+          uLCD.filled_circle(1 , i+10 , 4, RED); // beat line position is below 10
+        }
+        if ( circle[i] == 2 ){
+          
+          uLCD.filled_circle(1 , i+10 , 4, BLUE); // beat line position is below 10
+        } 
+      }
+      break;
       */
      /*
      case 7:
