@@ -206,23 +206,74 @@ void uLCD_print(){
        */
       /*
       case 6:
-      //game; haven't any idea
       //load coor
+      int score = 0;
       for (i=0;i<42;i++)
       {
         int circle[i]=radom(1,2);
       }
-      uLCD.
+      uLCD.rectangle(0, 5 , 50, 15, YELLOW) //beat line at 10, error is +/-5
+      uLCD.locate(30,30);
+      uLCD.printf("score: ");
+      uLCD.printf("%2D",score);
       for (i = 0;i<42,i++)
       {
         if ( circle[i] == 1 ){
-          
-          uLCD.filled_circle(1 , i+10 , 4, RED); // beat line position is below 10
+          for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+          {
+            uLCD.filled_circle(1 , 50-*y , 4, RED);
+            if (scroll == 1 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+            {
+              uLCD.cls(); // circle disappear
+              score = score+1;
+              uLCD.locate(30,30); //Right top corner
+              uLCD.printf("score:"); uLCD.print
+              uLCD.printf("%2D",score);
+            }
+            if (scroll == 1 && y<5) //miss
+            {
+              uLCD.cls(); // circle disappear
+              uLCD.locate(30,30); //Right top corner
+              uLCD.printf("score:"); uLCD.print
+              uLCD.printf("%2D",score);
+              uLCD.locate(30,5);
+              uLCD.color(PINK);
+              uLCD.printf("Miss");
+            }
+          }
+          //but we need to forward 5 sec to show up
         }
         if ( circle[i] == 2 ){
-          
-          uLCD.filled_circle(1 , i+10 , 4, BLUE); // beat line position is below 10
-        } 
+          for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+          {
+            uLCD.filled_circle(1 , i+10 , 4, BLUE); // beat line position is below 10
+            if (scroll == 2 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+            {
+              uLCD.cls(); // circle disappear
+              score = score+1;
+              uLCD.locate(30,30); //Right top corner
+              uLCD.printf("score:"); uLCD.print
+              uLCD.printf("%2D",score);
+            }
+            if (scroll == 2 && y<5) //miss
+            {
+              uLCD.cls(); // circle disappear
+              uLCD.locate(30,30); //Right top corner
+              uLCD.printf("score:"); uLCD.print
+              uLCD.printf("%2D",score);
+              uLCD.locate(30,5);
+              uLCD.color(PINK);
+              uLCD.printf("Miss");
+            }
+          }
+        }
+        //print score result
+        uLCD.cls(); // circle disappear
+        uLCD.locate(1,2); //at center
+        uLCD.printf("\nscore:\n");
+        uLCD.text_width(2); //4X size text
+        uLCD.text_height(2);
+        uLCD.printf("%2D",score);
       }
       break;
       */
@@ -368,9 +419,22 @@ void switch_event(){
        break;
        case 6:
        /*
-       //game, haven't any idea
-       if (event_num == 5 || event_num == 7){
-           break; //quit the game
+       //song_list[song_num]???
+       wait_us(5000); //play music slower than circle for 5 sec, let circle can run to beat line after 5 sec
+      for(int i = 0; i < 42; i++){
+        int length = noteLength[i];
+        while(length--){
+          // the loop below will play the note for the duration of 1s
+          for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+          {
+            queue4.call(playNoteC(song[i]));
+          }
+          if(length < 1) wait(1.0);
+        }
+      }
+       if (event_num == 5 || event_num == 7)
+       {
+          break; //quit the game
        }
        */
       break;
