@@ -16,6 +16,8 @@
 #include "tensorflow/lite/version.h"
 // uLCD library
 #include "uLCD_4DGL.h"
+#include <stdlib.h> // srand   rand, C++ cstdlib
+#include <time.h>  // time(), C++  ctime
 // Gesture parameters
 int mode;
 int scroll;
@@ -77,6 +79,124 @@ void reduce_thread(){
     led1 = 1;
     led2 = 0; //green light
     event_num--;
+}
+
+void playNote(int freq)
+{
+  for(int a = 0; a < kAudioTxBufferSize; a++)
+  {
+    waveform[a] = (int16_t) (sin((double)a * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
+  }
+  audio.spk.play(waveform, kAudioTxBufferSize);
+}
+
+
+void gesture_test(int argc, char* argv[]){
+    // Create an area of memory to use for input, output, and intermediate arrays.
+    // The size of this will depend on the model you're using, and may need to be
+    // determined by experimentation.
+  constexpr int kTensorArenaSize = 60 * 1024;
+  uint8_t tensor_arena[kTensorArenaSize];
+
+  // Whether we should clear the buffer next time we fetch data
+  bool should_clear_buffer = false;
+  bool got_data = false;
+
+  // The gesture index of the prediction
+  int gesture_index;
+
+  // Set up logging.
+  static tflite::MicroErrorReporter micro_error_reporter;
+  tflite::ErrorReporter* error_reporter = &micro_error_reporter;
+
+  // Map the model into a usable data structure. This doesn't involve any
+  // copying or parsing, it's a very lightweight operation.
+  const tflite::Model* model = tflite::GetModel(g_magic_wand_model_data);
+  if (model->version() != TFLITE_SCHEMA_VERSION) {
+    error_reporter->Report(
+        "Model provided is schema version %d not equal "
+        "to supported version %d.",
+        model->version(), TFLITE_SCHEMA_VERSION);
+    return -1;
+  }
+
+  // Pull in only the operation implementations we need.
+  // This relies on a complete list of all the ops needed by this graph.
+  // An easier approach is to just use the AllOpsResolver, but this will
+  // incur some penalty in code space for op implementations that are not
+  // needed by this graph.
+  static tflite::MicroOpResolver<5> micro_op_resolver;
+  micro_op_resolver.AddBuiltin(
+      tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
+      tflite::ops::micro::Register_DEPTHWISE_CONV_2D());
+  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_MAX_POOL_2D,
+                               tflite::ops::micro::Register_MAX_POOL_2D());
+  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_CONV_2D,
+                               tflite::ops::micro::Register_CONV_2D());
+  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_FULLY_CONNECTED,
+                               tflite::ops::micro::Register_FULLY_CONNECTED());
+  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_SOFTMAX,
+                               tflite::ops::micro::Register_SOFTMAX());
+
+  // Build an interpreter to run the model with
+  static tflite::MicroInterpreter static_interpreter(
+      model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
+  tflite::MicroInterpreter* interpreter = &static_interpreter;
+
+  // Allocate memory from the tensor_arena for the model's tensors
+  interpreter->AllocateTensors();
+
+  // Obtain pointer to the model's input tensor
+  TfLiteTensor* model_input = interpreter->input(0);
+  if ((model_input->dims->size != 4) || (model_input->dims->data[0] != 1) ||
+      (model_input->dims->data[1] != config.seq_length) ||
+      (model_input->dims->data[2] != kChannelNumber) ||
+      (model_input->type != kTfLiteFloat32)) {
+    error_reporter->Report("Bad input tensor parameters in model");
+    return -1;
+  }
+
+  int input_length = model_input->bytes / sizeof(float);
+
+  TfLiteStatus setup_status = SetupAccelerometer(error_reporter);
+  if (setup_status != kTfLiteOk) {
+    error_reporter->Report("Set up failed\n");
+    return -1;
+  }
+
+  error_reporter->Report("Set up successful...\n");
+
+  while (true) {
+
+    // Attempt to read new data from the accelerometer
+    got_data = ReadAccelerometer(error_reporter, model_input->data.f,
+                                 input_length, should_clear_buffer);
+
+    // If there was no new data,
+    // don't try to clear the buffer again and wait until next time
+    if (!got_data) {
+      should_clear_buffer = false;
+      continue;
+    }
+
+    // Run inference, and report any error
+    TfLiteStatus invoke_status = interpreter->Invoke();
+    if (invoke_status != kTfLiteOk) {
+      error_reporter->Report("Invoke failed on index: %d\n", begin_index);
+      continue;
+    }
+
+    // Analyze the results to obtain a prediction
+    gesture_index = PredictGesture(interpreter->output(0)->data.f);
+
+    // Clear the buffer next time we read data
+    should_clear_buffer = gesture_index < label_num;
+
+    // Produce an output
+    if (gesture_index < label_num) {
+      error_reporter->Report(gesture_index);
+    }
+  }
 }
 
 void uLCD_print(){
@@ -247,22 +367,22 @@ void uLCD_print(){
     break;
        
     case 6:
-        //load coor
+        //load basic
         int score = 0;
         int circle[42];
-        for (int i = 0; i<42; i++)
+        for (int r = 0; r<42; r++)
         {
-          circle[i] = random(1,2);
+          circle[r] = rand()%1+1;
         }
         uLCD.rectangle(0, 5 , 50, 15, 0xFFD306); //beat line at 10, error is +/-5
         uLCD.locate(30,30);
         uLCD.printf("score: ");
-        uLCD.printf("%2D",score);
-        for (int i = 0; i<42; i++)
+        uLCD.printf("%D",score);
+        for (int r1 = 0; r1<42; i++)
         {
-          if ( circle[i] == 1 )
+          if ( circle[r1] == 1 )
           {
-            for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+            for (int y = 0; y<=47; y = y+10) //the highest edge is 50, beat line is at 10, error is +/-5
             {
               uLCD.filled_circle(1 , 50-y , 4, 0xFF0000);
               if ((scroll == 1) && (y>=5) && (y<=15)) //red=left hand AND 5<=y<=15
@@ -271,14 +391,14 @@ void uLCD_print(){
                 score = score+1;
                 uLCD.locate(30,30); //Right top corner
                 uLCD.printf("score:");
-                uLCD.printf("%2D",score);
+                uLCD.printf("%D",score);
               }
               if ((scroll == 1) && (y<5)) //miss
               {
                 uLCD.cls(); // circle disappear
                 uLCD.locate(30,30); //Right top corner
                 uLCD.printf("score:");
-                uLCD.printf("%2D",score);
+                uLCD.printf("%D",score);
                 uLCD.locate(30,5);
                 uLCD.color(0x00FFFF);
                 uLCD.printf("Miss");
@@ -286,8 +406,8 @@ void uLCD_print(){
             }
           //but we need to forward 5 sec to show up
           }
-          if ( circle[i] == 2 ){
-            for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+          if ( circle[r1] == 2 ){
+            for (int y = 0; y<=47; y = y+10) //the highest edge is 50, beat line is at 10, error is +/-5
             {
               uLCD.filled_circle(1 , 50-y , 4, 0x46A3FF); // beat line position is below 10
               if ((scroll == 2)&&(y>=5)&&(y<=15)) //red=left hand AND 5<=y<=15
@@ -296,14 +416,14 @@ void uLCD_print(){
                 score = score+1;
                 uLCD.locate(30,30); //Right top corner
                 uLCD.printf("score:");
-                uLCD.printf("%2D",score);
+                uLCD.printf("%D",score);
               }
               if (scroll == 2 && y<5) //miss
               {
                 uLCD.cls(); // circle disappear
                 uLCD.locate(30,30); //Right top corner
                 uLCD.printf("score:");
-                uLCD.printf("%2D",score);
+                uLCD.printf("%D",score);
                 uLCD.locate(30,5);
                 uLCD.color(0x00FFFF);
                 uLCD.printf("Miss");
@@ -317,7 +437,7 @@ void uLCD_print(){
           uLCD.text_width(2); //4X size text
           uLCD.text_height(2);
           uLCD.color(0xFF0000);
-          uLCD.printf("%2D",score);
+          uLCD.printf("%D",score);
         }
     break;
     case 7:
@@ -334,24 +454,24 @@ void switch_event(){
         break;
         case 1:
         //play song_list[song_num]
-        for(int i = 0; i < 42; i++)
+        for(int k = 0; k < 42; k++)
        {
-         int length = noteLength[i];
+         int length = noteLength[k];
          while(length--)
          {
            // the loop below will play the note for the duration of 1s
            for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
            {
-            queue4.call(playNote, song[i]);
+            queue4.call(playNote, song[k]);
           }
-          if(length < 1) wait(1.0);
-          stoppoint = i;
+          if(length < 1) wait_us(1000);
+          stoppoint = k;
     }
   }
         oldsong_num = song_num;
         break;
         case 2:
-        stopPlayNoteC();
+        //stopPlayNoteC();
         queue6.call(gesture_test);
         mode = gesture_index;
         break;
@@ -390,17 +510,17 @@ void switch_event(){
             case 0:
             //play new song
             //song_list[song_num]???
-            for(int i = 0; i < 42; i++)
+            for(int k = 0; k < 42; k++)
   {
-    int length = noteLength[i];
+    int length = noteLength[k];
     while(length--)
     {
       // the loop below will play the note for the duration of 1s
       for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
       {
-        queue4.call(playNote, song[i]);
+        queue4.call(playNote, song[k]);
       }
-      if(length < 1) wait(1.0);
+      if(length < 1) wait_us(1000);
     }
   }
             break;
@@ -410,48 +530,46 @@ void switch_event(){
             break;
             }break;
             case 1:
-            int i;
-                i = stoppoint - 10;
-                if (i<0)
+                stoppoint = stoppoint - 10;
+                if (stoppoint<0)
                 {
-                  i = 0;
+                  stoppoint = 0;
                 }
                 //play old song
                 //song_list[oldsong_num]???
-                for(int i = 0; i < 42; i++)
+                for(int k = stoppoint; k < 42; k++)
   {
-    int length = noteLength[i];
+    int length = noteLength[k];
     while(length--)
     {
       // the loop below will play the note for the duration of 1s
       for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
       {
-        queue4.call(playNote, song[i]);
+        queue4.call(playNote, song[k]);
       }
-      if(length < 1) wait(1.0);
+      if(length < 1) wait_us(1000);
     }
   }
             break;
             case 2:
-            int i;
-                i = stoppoint +10;
-              if (i>42)
+            stoppoint = stoppoint+10;
+              if (stoppoint>42)
               {
-                i = 42;
+                stoppoint = 42;
               }
               //play old song
               //song_list[oldsong_num]???
-              for(int i = 0; i < 42; i++)
+              for(int k = stoppoint; k < 42; k++)
   {
-    int length = noteLength[i];
+    int length = noteLength[k];
     while(length--)
     {
       // the loop below will play the note for the duration of 1s
       for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
       {
-        queue4.call(playNote, song[i]);
+        queue4.call(playNote, song[k]);
       }
-      if(length < 1) wait(1.0);
+      if(length < 1) wait_us(1000);
     }
   }
             break;
@@ -466,17 +584,19 @@ void switch_event(){
         case 6:
        //song_list[song_num]???
        wait_us(5000); //play music slower than circle for 5 sec, let circle can run to beat line after 5 sec
-       for(int i = 0; i < 42; i++){
-          int length = noteLength[i];
-          while(length--){
-          // the loop below will play the note for the duration of 1s
-          for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-          {
-            queue4.call(playNoteC(song[i]));
-          }
-          if(length < 1) wait(1.0);
-        }
-        }
+for(int k = 0; k < 42; k++)
+  {
+    int length = noteLength[k];
+    while(length--)
+    {
+      // the loop below will play the note for the duration of 1s
+      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+      {
+        queue.call(playNote, song[k]);
+      }
+      if(length < 1) wait_us(1000);
+    }
+  }
         if (event_num == 5 || event_num == 7)
         {
           break; //quit the game
@@ -493,10 +613,10 @@ void switch_event(){
 void loadSignal(void)
 {
   led2 = 0;
-  int i = 0;
+  int p = 0;
   serialCount = 0;
   audio.spk.pause();
-  while(i < signalLength)
+  while(p < signalLength)
   {
     if(pc.readable())
     {
@@ -507,21 +627,14 @@ void loadSignal(void)
         serialInBuffer[serialCount] = '\0';
         signal[i] = (float) atof(serialInBuffer);
         serialCount = 0;
-        i++;
+        p++;
       }
     }
   }
   led2 = 1;
 }*/
 
-void playNote(int freq)
-{
-  for(int i = 0; i < kAudioTxBufferSize; i++)
-  {
-    waveform[i] = (int16_t) (sin((double)i * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
-  }
-  audio.spk.play(waveform, kAudioTxBufferSize);
-}
+
 
 /*
 void loadSignalHandler(void) {queue4.call(loadSignal);}
@@ -531,7 +644,7 @@ void playNoteC(int i_val) {idC = queue4.call_every(1, playNote, i_val);}
 void stopPlayNoteC(void) {queue4.cancel(idC);}
 */
 
-int main() {
+int main(void) {
     thread_add.start(callback(&queue1, &EventQueue::dispatch_forever));
     thread_reduce.start(callback(&queue2, &EventQueue::dispatch_forever));
     thread_switch.start(callback(&queue3, &EventQueue::dispatch_forever));
@@ -542,7 +655,7 @@ int main() {
     sw2.rise(queue1.event(add_thread));
     // sw3 is used to go back to the previous step
     sw3.rise(queue2.event(reduce_thread));
-    if (sw2 == 1 && sw3 == 1 ){
+    if ((sw2 == 1) && (sw3 == 1) ){
         event_num == 6;
     }
     // call switch_event every second, automatically defering to the eventThread
@@ -550,7 +663,7 @@ int main() {
     eventTicker.attach(&queue3.event(&switch_event),1.0f);
     Ticker uLCDTicker;
     uLCDTicker.attach(&queue5.event(&uLCD_print),1.0f);
-    while (1) {wait(1);}
+    while (1) {wait_us(1000);}
 }
 
 // Return the result of the last prediction
@@ -591,112 +704,4 @@ int PredictGesture(float* output) {
   last_predict = -1;
 
   return this_predict;
-}
-
-int gesture_test(int argc, char* argv[]){
-    // Create an area of memory to use for input, output, and intermediate arrays.
-    // The size of this will depend on the model you're using, and may need to be
-    // determined by experimentation.
-  constexpr int kTensorArenaSize = 60 * 1024;
-  uint8_t tensor_arena[kTensorArenaSize];
-
-  // Whether we should clear the buffer next time we fetch data
-  bool should_clear_buffer = false;
-  bool got_data = false;
-
-  // The gesture index of the prediction
-  int gesture_index;
-
-  // Set up logging.
-  static tflite::MicroErrorReporter micro_error_reporter;
-  tflite::ErrorReporter* error_reporter = &micro_error_reporter;
-
-  // Map the model into a usable data structure. This doesn't involve any
-  // copying or parsing, it's a very lightweight operation.
-  const tflite::Model* model = tflite::GetModel(g_magic_wand_model_data);
-  if (model->version() != TFLITE_SCHEMA_VERSION) {
-    error_reporter->Report(
-        "Model provided is schema version %d not equal "
-        "to supported version %d.",
-        model->version(), TFLITE_SCHEMA_VERSION);
-    return -1;
-  }
-
-  // Pull in only the operation implementations we need.
-  // This relies on a complete list of all the ops needed by this graph.
-  // An easier approach is to just use the AllOpsResolver, but this will
-  // incur some penalty in code space for op implementations that are not
-  // needed by this graph.
-  static tflite::MicroOpResolver<5> micro_op_resolver;
-  micro_op_resolver.AddBuiltin(
-      tflite::BuiltinOperator_DEPTHWISE_CONV_2D,
-      tflite::ops::micro::Register_DEPTHWISE_CONV_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_MAX_POOL_2D,
-                               tflite::ops::micro::Register_MAX_POOL_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_CONV_2D,
-                               tflite::ops::micro::Register_CONV_2D());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_FULLY_CONNECTED,
-                               tflite::ops::micro::Register_FULLY_CONNECTED());
-  micro_op_resolver.AddBuiltin(tflite::BuiltinOperator_SOFTMAX,
-                               tflite::ops::micro::Register_SOFTMAX());
-
-  // Build an interpreter to run the model with
-  static tflite::MicroInterpreter static_interpreter(
-      model, micro_op_resolver, tensor_arena, kTensorArenaSize, error_reporter);
-  tflite::MicroInterpreter* interpreter = &static_interpreter;
-
-  // Allocate memory from the tensor_arena for the model's tensors
-  interpreter->AllocateTensors();
-
-  // Obtain pointer to the model's input tensor
-  TfLiteTensor* model_input = interpreter->input(0);
-  if ((model_input->dims->size != 4) || (model_input->dims->data[0] != 1) ||
-      (model_input->dims->data[1] != config.seq_length) ||
-      (model_input->dims->data[2] != kChannelNumber) ||
-      (model_input->type != kTfLiteFloat32)) {
-    error_reporter->Report("Bad input tensor parameters in model");
-    return -1;
-  }
-
-  int input_length = model_input->bytes / sizeof(float);
-
-  TfLiteStatus setup_status = SetupAccelerometer(error_reporter);
-  if (setup_status != kTfLiteOk) {
-    error_reporter->Report("Set up failed\n");
-    return -1;
-  }
-
-  error_reporter->Report("Set up successful...\n");
-
-  while (true) {
-
-    // Attempt to read new data from the accelerometer
-    got_data = ReadAccelerometer(error_reporter, model_input->data.f,
-                                 input_length, should_clear_buffer);
-
-    // If there was no new data,
-    // don't try to clear the buffer again and wait until next time
-    if (!got_data) {
-      should_clear_buffer = false;
-      continue;
-    }
-
-    // Run inference, and report any error
-    TfLiteStatus invoke_status = interpreter->Invoke();
-    if (invoke_status != kTfLiteOk) {
-      error_reporter->Report("Invoke failed on index: %d\n", begin_index);
-      continue;
-    }
-
-    // Analyze the results to obtain a prediction
-    gesture_index = PredictGesture(interpreter->output(0)->data.f);
-
-    // Clear the buffer next time we read data
-    should_clear_buffer = gesture_index < label_num;
-
-    // Produce an output
-    if (gesture_index < label_num) {
-      error_reporter->Report(gesture_index);
-    }
-  }
 }
