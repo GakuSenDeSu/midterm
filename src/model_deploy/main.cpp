@@ -17,8 +17,8 @@
 // uLCD library
 #include "uLCD_4DGL.h"
 // Gesture parameters
-#define mode 3;
-#define scroll 3;
+#define mode 3
+#define scroll 3
 EventQueue queue6(32 * EVENTS_EVENT_SIZE);
 Thread thread_gesture;
 // Event parameters
@@ -34,6 +34,8 @@ Thread thread_add;
 Thread thread_reduce;
 Thread thread_switch;
 // Music parameter
+#define bufferLength (32)
+#define signalLength (1024)
 DA7212 audio;
 Serial pc(USBTX, USBRX);
 int16_t waveform[kAudioTxBufferSize];
@@ -42,7 +44,7 @@ Thread thread_song;
 char serialInBuffer[bufferLength];
 int serialCount = 0;
 int idC = 0;
-#define song_num 3; //how many songs, address of songs
+#define song_num 3 //how many songs, address of songs
 int oldsong_num;
 // Should Get from python, but I haven't solve out.
 int song[42]{
@@ -97,7 +99,7 @@ void uLCD_print(){
     case 2:
         switch (mode){
             case 0:
-            uLCD.background_color(0xFFFFFF)//song list title is white 
+            uLCD.background_color(0xFFFFFF);//song list title is white 
             uLCD.printf("\nSong List\n");
             uLCD.printf("\n1. Little Star\n");
             uLCD.printf("\n2. Quicker\n");
@@ -116,7 +118,7 @@ void uLCD_print(){
             uLCD.text_height(2);
             uLCD.color(BLUE);
             uLCD.locate(1,2);
-            uLCD.background_color(0xFFFFFF)//<< is white
+            uLCD.background_color(0xFFFFFF);//<< is white
             uLCD.printf("<<");
             uLCD.locate(1,3);
             uLCD.printf("  >|  >>");break;
@@ -131,7 +133,7 @@ void uLCD_print(){
             uLCD.locate(1,2);
             uLCD.printf("<<  >|  ");
             uLCD.locate(1,4);
-            uLCD.background_color(0xFFFFFF)//>> is white
+            uLCD.background_color(0xFFFFFF);//>> is white
             uLCD.printf(">>");break;
         }break;
     case 3:
@@ -140,7 +142,7 @@ void uLCD_print(){
       switch(song_num){
         case 0:
         uLCD.printf("\nSong List\n");
-        uLCD.background_color(0xFFFFFF)//1. is white
+        uLCD.background_color(0xFFFFFF);//1. is white
         uLCD.printf("\n1. Little Star\n");
         uLCD.printf("\n2. Quicker\n");
         uLCD.printf("\n3. Slower\n");
@@ -153,7 +155,7 @@ void uLCD_print(){
         case 1:
         uLCD.printf("\nSong List\n");
         uLCD.printf("\n1. Little Star\n");
-        uLCD.background_color(0xFFFFFF)//2. is white
+        uLCD.background_color(0xFFFFFF);//2. is white
         uLCD.printf("\n2. Quicker\n");
         uLCD.printf("\n3. Slower\n");
         uLCD.text_width(2); //2X size text
@@ -165,7 +167,7 @@ void uLCD_print(){
         uLCD.printf("\nSong List\n");
         uLCD.printf("\n1. Little Star\n");
         uLCD.printf("\n2. Quicker\n");
-        uLCD.background_color(0xFFFFFF)//3. is white
+        uLCD.background_color(0xFFFFFF);//3. is white
         uLCD.printf("\n3. Slower\n");
         uLCD.text_width(2); //2X size text
         uLCD.text_height(2);
@@ -183,7 +185,7 @@ void uLCD_print(){
       uLCD.text_height(2);
       uLCD.color(BLUE);
       uLCD.locate(1,2);
-      uLCD.background_color(0xFFFFFF)//<< is white
+      uLCD.background_color(0xFFFFFF);//<< is white
       uLCD.printf("<<");
       uLCD.locate(1,3);
       uLCD.printf("  >|  >>");break;
@@ -198,7 +200,7 @@ void uLCD_print(){
       uLCD.locate(1,2);
       uLCD.printf("<<  >|  ");
       uLCD.locate(1,4);
-      uLCD.background_color(0xFFFFFF)//>> is white
+      uLCD.background_color(0xFFFFFF);//>> is white
       uLCD.printf(">>");break;
     }
     break;
@@ -250,7 +252,7 @@ void uLCD_print(){
         {
           int circle[i]=radom(1,2);
         }
-        uLCD.rectangle(0, 5 , 50, 15, 0xFFD306) //beat line at 10, error is +/-5
+        uLCD.rectangle(0, 5 , 50, 15, 0xFFD306); //beat line at 10, error is +/-5
         uLCD.locate(30,30);
         uLCD.printf("score: ");
         uLCD.printf("%2D",score);
