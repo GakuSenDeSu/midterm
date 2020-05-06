@@ -17,8 +17,8 @@
 // uLCD library
 #include "uLCD_4DGL.h"
 // Gesture parameters
-#define mode 3
-#define scroll 3
+int mode;
+int scroll;
 EventQueue queue6(32 * EVENTS_EVENT_SIZE);
 Thread thread_gesture;
 // Event parameters
@@ -37,15 +37,13 @@ Thread thread_switch;
 #define bufferLength (32)
 #define signalLength (1024)
 DA7212 audio;
-Serial pc(USBTX, USBRX);
 int16_t waveform[kAudioTxBufferSize];
 EventQueue queue4(32 * EVENTS_EVENT_SIZE);
 Thread thread_song;
 char serialInBuffer[bufferLength];
-int serialCount = 0;
-int idC = 0;
-#define song_num 3 //how many songs, address of songs
+int song_num; //how many songs, address of songs
 int oldsong_num;
+int stoppoint;
 // Should Get from python, but I haven't solve out.
 int song[42]{
 1, 1, 1, 1, 1, 1, 2, 
@@ -54,7 +52,7 @@ int song[42]{
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2
-}
+};
 int noteLength[42]{
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2, 
@@ -62,7 +60,7 @@ int noteLength[42]{
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2, 
 1, 1, 1, 1, 1, 1, 2
-}
+};
 
 // uLCD parameter
 EventQueue queue5(32 * EVENTS_EVENT_SIZE);
@@ -134,8 +132,10 @@ void uLCD_print(){
             uLCD.printf("<<  >|  ");
             uLCD.locate(1,4);
             uLCD.background_color(0xFFFFFF);//>> is white
-            uLCD.printf(">>");break;
-        }break;
+            uLCD.printf(">>");
+            break;
+        }
+    break;
     case 3:
     switch(mode){
       case 0://see what song is white
@@ -201,7 +201,8 @@ void uLCD_print(){
       uLCD.printf("<<  >|  ");
       uLCD.locate(1,4);
       uLCD.background_color(0xFFFFFF);//>> is white
-      uLCD.printf(">>");break;
+      uLCD.printf(">>");
+      break;
     }
     break;
     case 4:
@@ -248,21 +249,23 @@ void uLCD_print(){
     case 6:
         //load coor
         int score = 0;
-        for (i=0;i<42;i++)
+        int circle[42];
+        for (int i = 0; i<42; i++)
         {
-          int circle[i]=radom(1,2);
+          circle[i] = random(1,2);
         }
         uLCD.rectangle(0, 5 , 50, 15, 0xFFD306); //beat line at 10, error is +/-5
         uLCD.locate(30,30);
         uLCD.printf("score: ");
         uLCD.printf("%2D",score);
-        for (i = 0;i<42,i++)
+        for (int i = 0; i<42; i++)
         {
-          if ( circle[i] == 1 ){
+          if ( circle[i] == 1 )
+          {
             for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
             {
               uLCD.filled_circle(1 , 50-y , 4, 0xFF0000);
-              if (scroll == 1 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+              if ((scroll == 1) && (y>=5) && (y<=15)) //red=left hand AND 5<=y<=15
               {
                 uLCD.cls(); // circle disappear
                 score = score+1;
@@ -270,7 +273,7 @@ void uLCD_print(){
                 uLCD.printf("score:");
                 uLCD.printf("%2D",score);
               }
-              if (scroll == 1 && y<5) //miss
+              if ((scroll == 1) && (y<5)) //miss
               {
                 uLCD.cls(); // circle disappear
                 uLCD.locate(30,30); //Right top corner
@@ -287,7 +290,7 @@ void uLCD_print(){
             for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
             {
               uLCD.filled_circle(1 , 50-y , 4, 0x46A3FF); // beat line position is below 10
-              if (scroll == 2 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+              if ((scroll == 2)&&(y>=5)&&(y<=15)) //red=left hand AND 5<=y<=15
               {
                 uLCD.cls(); // circle disappear
                 score = score+1;
@@ -324,27 +327,28 @@ void uLCD_print(){
 }
 
 void switch_event(){
-    queue5.call(uLCD_print);
     switch(event_num){
         case 0:
-        queue4.call(loadSignalHandler);
+        //queue4.call(loadSignalHandler);
         event_num++;
         break;
         case 1:
-        /*
         //play song_list[song_num]
-        for(int i = 0; i < 42; i++){
-        int length = noteLength[i];
-        while(length--){
-        // the loop below will play the note for the duration of 1s
-        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-        {
-        queue4.call(playNoteC(song[i]));
-        }
-        if(length < 1) wait(1.0);
-        }
-        }
-        oldsong_num = song_num;*/
+        for(int i = 0; i < 42; i++)
+       {
+         int length = noteLength[i];
+         while(length--)
+         {
+           // the loop below will play the note for the duration of 1s
+           for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+           {
+            queue4.call(playNote, song[i]);
+          }
+          if(length < 1) wait(1.0);
+          stoppoint = i;
+    }
+  }
+        oldsong_num = song_num;
         break;
         case 2:
         stopPlayNoteC();
@@ -356,21 +360,22 @@ void switch_event(){
             case 0:
             queue6.call(gesture_test);
             scroll = gesture_index;
-            switch (scroll){
-                case 0://Nothing
-                break;
-                case 1:
-                song_num = (song_num)-1;break;
-                case 2:
-                song_num = (song_num)+1;break;
+            switch (scroll)
+            {
+              case 0://Nothing
+              break;
+              case 1:
+              song_num = song_num-1;break;
+              case 2:
+              song_num = song_num+1;break;
             }
             if (scroll<0)
             {
-                song_num = 0;
+              song_num = 0;
             }
             if (scroll>2)
             {
-                song_num = 2;
+              song_num = 2;
             }
             case 1:
             break;
@@ -385,17 +390,19 @@ void switch_event(){
             case 0:
             //play new song
             //song_list[song_num]???
-            for(int i = 0; i < 42; i++){
-            int length = noteLength[i];
-            while(length--){
-            // the loop below will play the note for the duration of 1s
-            for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-            {
-              queue4.call(playNoteC(song[i]));
-            }
-             if(length < 1) wait(1.0);
-             }
-            }
+            for(int i = 0; i < 42; i++)
+  {
+    int length = noteLength[i];
+    while(length--)
+    {
+      // the loop below will play the note for the duration of 1s
+      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+      {
+        queue4.call(playNote, song[i]);
+      }
+      if(length < 1) wait(1.0);
+    }
+  }
             break;
             case 1://Quicker
             break;
@@ -403,45 +410,50 @@ void switch_event(){
             break;
             }break;
             case 1:
-                i = i -10;
+            int i;
+                i = stoppoint - 10;
                 if (i<0)
                 {
                   i = 0;
                 }
                 //play old song
-                song_list[oldsong_num]???
-                for(int i = 0; i < 42; i++){
-                  int length = noteLength[i];
-                  while(length--){
-                  // the loop below will play the note for the duration of 1s
-                  for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                  {
-                    queue4.call(playNoteC(song[i]));
-                  }
-                  if(length < 1) wait(1.0);
-                  }
-                }
+                //song_list[oldsong_num]???
+                for(int i = 0; i < 42; i++)
+  {
+    int length = noteLength[i];
+    while(length--)
+    {
+      // the loop below will play the note for the duration of 1s
+      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+      {
+        queue4.call(playNote, song[i]);
+      }
+      if(length < 1) wait(1.0);
+    }
+  }
             break;
             case 2:
-              i = i +10;
-              if (i>length(song))
+            int i;
+                i = stoppoint +10;
+              if (i>42)
               {
-                i = length(song) -1;
+                i = 42;
               }
               //play old song
               //song_list[oldsong_num]???
               for(int i = 0; i < 42; i++)
-              {
-                int length = noteLength[i];
-                while(length--){
-                // the loop below will play the note for the duration of 1s
-                for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                {
-                  queue4.call(playNoteC(song[i]));
-                }
-                if(length < 1) wait(1.0);
-                }
-              }
+  {
+    int length = noteLength[i];
+    while(length--)
+    {
+      // the loop below will play the note for the duration of 1s
+      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+      {
+        queue4.call(playNote, song[i]);
+      }
+      if(length < 1) wait(1.0);
+    }
+  }
             break;
         }
         break;
@@ -477,7 +489,7 @@ void switch_event(){
       break;
     }
 }
-
+/*
 void loadSignal(void)
 {
   led2 = 0;
@@ -500,27 +512,24 @@ void loadSignal(void)
     }
   }
   led2 = 1;
-}
+}*/
 
 void playNote(int freq)
 {
-    for (int i = 0; i < kAudioTxBufferSize; i++)
+  for(int i = 0; i < kAudioTxBufferSize; i++)
   {
-    waveform[i] = (int16_t) (signal[(uint16_t) (i * freq * signalLength * 1. / kAudioSampleFrequency) % signalLength] * ((1<<16) - 1));
+    waveform[i] = (int16_t) (sin((double)i * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
   }
-  // the loop below will play the note for the duration of 1s
-  for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-  {
-    audio.spk.play(waveform, kAudioTxBufferSize);
-  }
+  audio.spk.play(waveform, kAudioTxBufferSize);
 }
 
+/*
 void loadSignalHandler(void) {queue4.call(loadSignal);}
 
 void playNoteC(int i_val) {idC = queue4.call_every(1, playNote, i_val);}
 
 void stopPlayNoteC(void) {queue4.cancel(idC);}
-
+*/
 
 int main() {
     thread_add.start(callback(&queue1, &EventQueue::dispatch_forever));
@@ -539,6 +548,8 @@ int main() {
     // call switch_event every second, automatically defering to the eventThread
     Ticker eventTicker;
     eventTicker.attach(&queue3.event(&switch_event),1.0f);
+    Ticker uLCDTicker;
+    uLCDTicker.attach(&queue5.event(&uLCD_print),1.0f);
     while (1) {wait(1);}
 }
 
@@ -582,7 +593,7 @@ int PredictGesture(float* output) {
   return this_predict;
 }
 
-void gesture_test(int argc, char* argv[]){
+int gesture_test(int argc, char* argv[]){
     // Create an area of memory to use for input, output, and intermediate arrays.
     // The size of this will depend on the model you're using, and may need to be
     // determined by experimentation.
@@ -684,6 +695,8 @@ void gesture_test(int argc, char* argv[]){
     should_clear_buffer = gesture_index < label_num;
 
     // Produce an output
-    // Maybe it doesn't matter? 
+    if (gesture_index < label_num) {
+      error_reporter->Report(gesture_index);
+    }
   }
 }
