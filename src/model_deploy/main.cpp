@@ -45,6 +45,22 @@ int idC = 0;
 #define song_num 3; //how many songs, address of songs
 int oldsong_num;
 // Should Get from python, but I haven't solve out.
+int song[42]{
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2
+}
+int noteLength[42]{
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2, 
+1, 1, 1, 1, 1, 1, 2
+}
 
 // uLCD parameter
 EventQueue queue5(32 * EVENTS_EVENT_SIZE);
@@ -64,12 +80,12 @@ void reduce_thread(){
 }
 
 void uLCD_print(){
-    uLCD.cls();
-    switch (event_num){
-        case 0:
+  uLCD.cls();
+  switch (event_num){
+    case 0:
         uLCD.printf("\nSTART...\n");
-        break;
-        case 1:
+      break;
+    case 1:
         uLCD.printf("\nLittle Star\n"); // Song name
         uLCD.printf("\n A famous song...");// Song imformation
         uLCD.text_width(2); //2X size text
@@ -78,7 +94,7 @@ void uLCD_print(){
         uLCD.locate(1,2);
         uLCD.printf(">|");
         break;
-        case 2:
+    case 2:
         switch (mode){
             case 0:
             uLCD.background_color(0xFFFFFF)//song list title is white 
@@ -118,176 +134,195 @@ void uLCD_print(){
             uLCD.background_color(0xFFFFFF)//>> is white
             uLCD.printf(">>");break;
         }break;
-        case 3:
-        switch(mode){
-            case 0://see what song is white
-            switch(song_num){
-                case 0:
-                uLCD.printf("\nSong List\n");
-                uLCD.background_color(0xFFFFFF)//1. is white
-                uLCD.printf("\n1. Little Star\n");
-                uLCD.printf("\n2. Quicker\n");
-                uLCD.printf("\n3. Slower\n");
-                uLCD.text_width(2); //2X size text
-                uLCD.text_height(2);
-                uLCD.color(BLUE);
-                uLCD.locate(1,2);
-                uLCD.printf("<<  >|  >>");break;
-                case 1:
-                uLCD.printf("\nSong List\n");
-                uLCD.printf("\n1. Little Star\n");
-                uLCD.background_color(0xFFFFFF)//2. is white
-                uLCD.printf("\n2. Quicker\n");
-                uLCD.printf("\n3. Slower\n");
-                uLCD.text_width(2); //2X size text
-                uLCD.text_height(2);
-                uLCD.color(BLUE);
-                uLCD.locate(1,2);
-                uLCD.printf("<<  >|  >>");break;
-                case 3:
-                uLCD.printf("\nSong List\n");
-                uLCD.printf("\n1. Little Star\n");
-                uLCD.printf("\n2. Quicker\n");
-                uLCD.background_color(0xFFFFFF)//3. is white
-                uLCD.printf("\n3. Slower\n");
-                uLCD.text_width(2); //2X size text
-                uLCD.text_height(2);
-                uLCD.color(BLUE);
-                uLCD.locate(1,2);
-                uLCD.printf("<<  >|  >>");break;
-            }
-            break;
-            case 1:
-            uLCD.printf("\nSong List\n");
-            uLCD.printf("\n1. Little Star\n");
-            uLCD.printf("\n2. Quicker\n");
-            uLCD.printf("\n3. Slower\n");
-            uLCD.text_width(2); //2X size text
-            uLCD.text_height(2);
-            uLCD.color(BLUE);
-            uLCD.locate(1,2);
-            uLCD.background_color(0xFFFFFF)//<< is white
-            uLCD.printf("<<");
-            uLCD.locate(1,3);
-            uLCD.printf("  >|  >>");break;
-            case 2:
-            uLCD.printf("\nSong List\n");
-            uLCD.printf("\n1. Little Star\n");
-            uLCD.printf("\n2. Quicker\n");
-            uLCD.printf("\n3. Slower\n");
-            uLCD.text_width(2); //2X size text
-            uLCD.text_height(2);
-            uLCD.color(BLUE);
-            uLCD.locate(1,2);
-            uLCD.printf("<<  >|  ");
-            uLCD.locate(1,4);
-            uLCD.background_color(0xFFFFFF)//>> is white
-            uLCD.printf(">>");break;
-        }break;
-        case 4:
-        /*
-        switch (mode)
-        {
-            case 0:
-            //show song_list[song_num]info
-            break;
-            case 1:
-            //show song_list[oldsong_num]info
-            break;
-            case 2:
-            //show song_list[oldsong_num]info
-            break;
-        }
-        */
-       /*
-       case 5:
-       //need first or later, so not write here
-       break
-       */
-      /*
-      case 6:
-      //load coor
-      int score = 0;
-      for (i=0;i<42;i++)
-      {
-        int circle[i]=radom(1,2);
-      }
-      uLCD.rectangle(0, 5 , 50, 15, YELLOW) //beat line at 10, error is +/-5
-      uLCD.locate(30,30);
-      uLCD.printf("score: ");
-      uLCD.printf("%2D",score);
-      for (i = 0;i<42,i++)
-      {
-        if ( circle[i] == 1 ){
-          for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
-          {
-            uLCD.filled_circle(1 , 50-*y , 4, RED);
-            if (scroll == 1 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
-            {
-              uLCD.cls(); // circle disappear
-              score = score+1;
-              uLCD.locate(30,30); //Right top corner
-              uLCD.printf("score:"); uLCD.print
-              uLCD.printf("%2D",score);
-            }
-            if (scroll == 1 && y<5) //miss
-            {
-              uLCD.cls(); // circle disappear
-              uLCD.locate(30,30); //Right top corner
-              uLCD.printf("score:"); uLCD.print
-              uLCD.printf("%2D",score);
-              uLCD.locate(30,5);
-              uLCD.color(PINK);
-              uLCD.printf("Miss");
-            }
-          }
-          //but we need to forward 5 sec to show up
-        }
-        if ( circle[i] == 2 ){
-          for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
-          {
-            uLCD.filled_circle(1 , i+10 , 4, BLUE); // beat line position is below 10
-            if (scroll == 2 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
-            {
-              uLCD.cls(); // circle disappear
-              score = score+1;
-              uLCD.locate(30,30); //Right top corner
-              uLCD.printf("score:"); uLCD.print
-              uLCD.printf("%2D",score);
-            }
-            if (scroll == 2 && y<5) //miss
-            {
-              uLCD.cls(); // circle disappear
-              uLCD.locate(30,30); //Right top corner
-              uLCD.printf("score:"); uLCD.print
-              uLCD.printf("%2D",score);
-              uLCD.locate(30,5);
-              uLCD.color(PINK);
-              uLCD.printf("Miss");
-            }
-          }
-        }
-        //print score result
-        uLCD.cls(); // circle disappear
-        uLCD.locate(1,2); //at center
-        uLCD.printf("\nscore:\n");
-        uLCD.text_width(2); //4X size text
+    case 3:
+    switch(mode){
+      case 0://see what song is white
+      switch(song_num){
+        case 0:
+        uLCD.printf("\nSong List\n");
+        uLCD.background_color(0xFFFFFF)//1. is white
+        uLCD.printf("\n1. Little Star\n");
+        uLCD.printf("\n2. Quicker\n");
+        uLCD.printf("\n3. Slower\n");
+        uLCD.text_width(2); //2X size text
         uLCD.text_height(2);
-        uLCD.printf("%2D",score);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf("<<  >|  >>");
+        break;
+        case 1:
+        uLCD.printf("\nSong List\n");
+        uLCD.printf("\n1. Little Star\n");
+        uLCD.background_color(0xFFFFFF)//2. is white
+        uLCD.printf("\n2. Quicker\n");
+        uLCD.printf("\n3. Slower\n");
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf("<<  >|  >>");break;
+        case 2:
+        uLCD.printf("\nSong List\n");
+        uLCD.printf("\n1. Little Star\n");
+        uLCD.printf("\n2. Quicker\n");
+        uLCD.background_color(0xFFFFFF)//3. is white
+        uLCD.printf("\n3. Slower\n");
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf("<<  >|  >>");break;
       }
       break;
-      */
-     /*
-     case 7:
-     //to restart game, same as case 5, not here
-     break;
-     */
-     }
+      case 1:
+      uLCD.printf("\nSong List\n");
+      uLCD.printf("\n1. Little Star\n");
+      uLCD.printf("\n2. Quicker\n");
+      uLCD.printf("\n3. Slower\n");
+      uLCD.text_width(2); //2X size text
+      uLCD.text_height(2);
+      uLCD.color(BLUE);
+      uLCD.locate(1,2);
+      uLCD.background_color(0xFFFFFF)//<< is white
+      uLCD.printf("<<");
+      uLCD.locate(1,3);
+      uLCD.printf("  >|  >>");break;
+      case 2:
+      uLCD.printf("\nSong List\n");
+      uLCD.printf("\n1. Little Star\n");
+      uLCD.printf("\n2. Quicker\n");
+      uLCD.printf("\n3. Slower\n");
+      uLCD.text_width(2); //2X size text
+      uLCD.text_height(2);
+      uLCD.color(BLUE);
+      uLCD.locate(1,2);
+      uLCD.printf("<<  >|  ");
+      uLCD.locate(1,4);
+      uLCD.background_color(0xFFFFFF)//>> is white
+      uLCD.printf(">>");break;
+    }
+    break;
+    case 4:
+      switch (mode)
+      {
+        case 0:
+        //show song_list[song_num]info
+        //show song_list[oldsong_num]info
+        uLCD.printf("\nLittle Star\n"); // Song name
+        uLCD.printf("\n A famous song...");// Song imformation
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf(">|");
+        break;
+        case 1:
+        //show song_list[oldsong_num]info
+        uLCD.printf("\nLittle Star\n"); // Song name
+        uLCD.printf("\n A famous song...");// Song imformation
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf(">|");
+        break;
+        case 2:
+        //show song_list[oldsong_num]info
+        //show song_list[oldsong_num]info
+        uLCD.printf("\nLittle Star\n"); // Song name
+        uLCD.printf("\n A famous song...");// Song imformation
+        uLCD.text_width(2); //2X size text
+        uLCD.text_height(2);
+        uLCD.color(BLUE);
+        uLCD.locate(1,2);
+        uLCD.printf(">|");
+        break;
+        }
+       
+    case 5:
+    //need first or later, so not write here
+    break;
+       
+    case 6:
+        //load coor
+        int score = 0;
+        for (i=0;i<42;i++)
+        {
+          int circle[i]=radom(1,2);
+        }
+        uLCD.rectangle(0, 5 , 50, 15, 0xFFD306) //beat line at 10, error is +/-5
+        uLCD.locate(30,30);
+        uLCD.printf("score: ");
+        uLCD.printf("%2D",score);
+        for (i = 0;i<42,i++)
+        {
+          if ( circle[i] == 1 ){
+            for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+            {
+              uLCD.filled_circle(1 , 50-y , 4, 0xFF0000);
+              if (scroll == 1 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+              {
+                uLCD.cls(); // circle disappear
+                score = score+1;
+                uLCD.locate(30,30); //Right top corner
+                uLCD.printf("score:");
+                uLCD.printf("%2D",score);
+              }
+              if (scroll == 1 && y<5) //miss
+              {
+                uLCD.cls(); // circle disappear
+                uLCD.locate(30,30); //Right top corner
+                uLCD.printf("score:");
+                uLCD.printf("%2D",score);
+                uLCD.locate(30,5);
+                uLCD.color(0x00FFFF);
+                uLCD.printf("Miss");
+              }
+            }
+          //but we need to forward 5 sec to show up
+          }
+          if ( circle[i] == 2 ){
+            for (int y = 0; y<=47; y+10) //the highest edge is 50, beat line is at 10, error is +/-5
+            {
+              uLCD.filled_circle(1 , 50-y , 4, 0x46A3FF); // beat line position is below 10
+              if (scroll == 2 && y>=5 && y<=15) //red=left hand AND 5<=y<=15
+              {
+                uLCD.cls(); // circle disappear
+                score = score+1;
+                uLCD.locate(30,30); //Right top corner
+                uLCD.printf("score:");
+                uLCD.printf("%2D",score);
+              }
+              if (scroll == 2 && y<5) //miss
+              {
+                uLCD.cls(); // circle disappear
+                uLCD.locate(30,30); //Right top corner
+                uLCD.printf("score:");
+                uLCD.printf("%2D",score);
+                uLCD.locate(30,5);
+                uLCD.color(0x00FFFF);
+                uLCD.printf("Miss");
+              }
+            }
+          }
+          //print score result
+          uLCD.cls(); // circle disappear
+          uLCD.locate(1,2); //at center
+          uLCD.printf("\nscore:\n");
+          uLCD.text_width(2); //4X size text
+          uLCD.text_height(2);
+          uLCD.color(0xFF0000);
+          uLCD.printf("%2D",score);
+        }
+    break;
+    case 7:
+      //to restart game, same as case 5, not here
+    break;
+  }
 }
 
 void switch_event(){
     queue5.call(uLCD_print);
-    queue6.call(gesture_test);
     switch(event_num){
         case 0:
         queue4.call(loadSignalHandler);
@@ -295,29 +330,33 @@ void switch_event(){
         break;
         case 1:
         /*
-        play song_list[song_num]
-            for(int i = 0; i < 42; i++){
-                int length = noteLength[i];
-                while(length--){
-                    // the loop below will play the note for the duration of 1s
-                    for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                    {
-                        queue4.call(playNoteC(song[i]));
-                    }
-                    if(length < 1) wait(1.0);
-                }
-            }
-            oldsong_num = song_num;
-        break;*/
+        //play song_list[song_num]
+        for(int i = 0; i < 42; i++){
+        int length = noteLength[i];
+        while(length--){
+        // the loop below will play the note for the duration of 1s
+        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+        {
+        queue4.call(playNoteC(song[i]));
+        }
+        if(length < 1) wait(1.0);
+        }
+        }
+        oldsong_num = song_num;*/
+        break;
         case 2:
         stopPlayNoteC();
+        queue6.call(gesture_test);
         mode = gesture_index;
         break;
         case 3:
         switch(mode){
             case 0:
+            queue6.call(gesture_test);
             scroll = gesture_index;
             switch (scroll){
+                case 0://Nothing
+                break;
                 case 1:
                 song_num = (song_num)-1;break;
                 case 2:
@@ -338,92 +377,84 @@ void switch_event(){
         }
         break;
         case 4:
-        switch(gesturea){
+        switch(mode){
+          case 0:
+          switch (song_num){
             case 0:
-            switch (song_num){
-                case 0:
-                /*
-                play new song
-                song_list[song_num]???
-                
-                    for(int i = 0; i < 42; i++){
-                        int length = noteLength[i];
-                        while(length--){
-                        // the loop below will play the note for the duration of 1s
-                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                        {
-                            queue4.call(playNoteC(song[i]));
-                        }
-                        if(length < 1) wait(1.0);
-                        }
-                    }*/
-                break;
-                case 1://Quicker
-                break;
-                case 2://Slower
-                break;
+            //play new song
+            //song_list[song_num]???
+            for(int i = 0; i < 42; i++){
+            int length = noteLength[i];
+            while(length--){
+            // the loop below will play the note for the duration of 1s
+            for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+            {
+              queue4.call(playNoteC(song[i]));
+            }
+             if(length < 1) wait(1.0);
+             }
+            }
+            break;
+            case 1://Quicker
+            break;
+            case 2://Slower
+            break;
             }break;
             case 1:
                 i = i -10;
                 if (i<0)
                 {
-                    i = 0;
+                  i = 0;
                 }
-                /*
-                play old song
+                //play old song
                 song_list[oldsong_num]???
                 for(int i = 0; i < 42; i++){
-                        int length = noteLength[i];
-                        while(length--){
-                        // the loop below will play the note for the duration of 1s
-                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                        {
-                            queue4.call(playNoteC(song[i]));
-                        }
-                        if(length < 1) wait(1.0);
-                        }
-                    }
-                */
+                  int length = noteLength[i];
+                  while(length--){
+                  // the loop below will play the note for the duration of 1s
+                  for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+                  {
+                    queue4.call(playNoteC(song[i]));
+                  }
+                  if(length < 1) wait(1.0);
+                  }
+                }
             break;
             case 2:
-                i = i +10;
-                if (i>length(song))
+              i = i +10;
+              if (i>length(song))
+              {
+                i = length(song) -1;
+              }
+              //play old song
+              //song_list[oldsong_num]???
+              for(int i = 0; i < 42; i++)
+              {
+                int length = noteLength[i];
+                while(length--){
+                // the loop below will play the note for the duration of 1s
+                for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
                 {
-                    i = length(song) -1;
+                  queue4.call(playNoteC(song[i]));
                 }
-                /*
-                play old song
-                song_list[oldsong_num]???
-                for(int i = 0; i < 42; i++){
-                        int length = noteLength[i];
-                        while(length--){
-                        // the loop below will play the note for the duration of 1s
-                        for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-                        {
-                            queue4.call(playNoteC(song[i]));
-                        }
-                        if(length < 1) wait(1.0);
-                        }
-                    }
-                */
+                if(length < 1) wait(1.0);
+                }
+              }
             break;
         }
         break;
         case 5:
-        /*
         uLCD.cls();
         uLCD.printf("\nPlease wait...\n");
         oldsong_num = song_num; //restore
         event_num = event_num - 4;//go back to case2 and can start again
-        */
-       break;
-       case 6:
-       /*
+        break;
+        case 6:
        //song_list[song_num]???
        wait_us(5000); //play music slower than circle for 5 sec, let circle can run to beat line after 5 sec
-      for(int i = 0; i < 42; i++){
-        int length = noteLength[i];
-        while(length--){
+       for(int i = 0; i < 42; i++){
+          int length = noteLength[i];
+          while(length--){
           // the loop below will play the note for the duration of 1s
           for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
           {
@@ -431,19 +462,16 @@ void switch_event(){
           }
           if(length < 1) wait(1.0);
         }
-      }
-       if (event_num == 5 || event_num == 7)
-       {
+        }
+        if (event_num == 5 || event_num == 7)
+        {
           break; //quit the game
-       }
-       */
+        }
       break;
       case 7:
-      /*
       uLCD.cls();
       uLCD.printf("\nPlease wait...\n");
       event_num = event_num - 1;// go back to case 6, restart the game
-      */
       break;
     }
 }
@@ -552,7 +580,7 @@ int PredictGesture(float* output) {
   return this_predict;
 }
 
-void gesture_test(){
+void gesture_test(int argc, char* argv[]){
     // Create an area of memory to use for input, output, and intermediate arrays.
     // The size of this will depend on the model you're using, and may need to be
     // determined by experimentation.
