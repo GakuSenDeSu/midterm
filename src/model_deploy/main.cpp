@@ -197,7 +197,7 @@ void gesture_test(int argc, char* argv[]){
 }
 
 void uLCD_print(){
-  
+  // Can copy from test-uLCD_print
 }
 
 void switch_event(){
