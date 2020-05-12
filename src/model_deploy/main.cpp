@@ -195,6 +195,7 @@ void gesture_test(int argc, char* argv[]){
     // Produce an output
     if (gesture_index < label_num) {
       error_reporter->Report(gesture_index);
+      return gesture_index;
     }
   }
 }
@@ -378,7 +379,7 @@ void uLCD_print(){
         uLCD.locate(30,30);
         uLCD.printf("score: ");
         uLCD.printf("%D",score);
-        for (int r1 = 0; r1<42; i++)
+        for (int r1 = 0; r1<42; r1++)
         {
           if ( circle[r1] == 1 )
           {
@@ -471,7 +472,6 @@ void switch_event(){
         oldsong_num = song_num;
         break;
         case 2:
-        //stopPlayNoteC();
         queue6.call(gesture_test);
         mode = gesture_index;
         break;
@@ -592,7 +592,7 @@ for(int k = 0; k < 42; k++)
       // the loop below will play the note for the duration of 1s
       for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
       {
-        queue.call(playNote, song[k]);
+        queue4.call(playNote, song[k]);
       }
       if(length < 1) wait_us(1000);
     }
@@ -609,40 +609,6 @@ for(int k = 0; k < 42; k++)
       break;
     }
 }
-/*
-void loadSignal(void)
-{
-  led2 = 0;
-  int p = 0;
-  serialCount = 0;
-  audio.spk.pause();
-  while(p < signalLength)
-  {
-    if(pc.readable())
-    {
-      serialInBuffer[serialCount] = pc.getc();
-      serialCount++;
-      if(serialCount == 5)
-      {
-        serialInBuffer[serialCount] = '\0';
-        signal[i] = (float) atof(serialInBuffer);
-        serialCount = 0;
-        p++;
-      }
-    }
-  }
-  led2 = 1;
-}*/
-
-
-
-/*
-void loadSignalHandler(void) {queue4.call(loadSignal);}
-
-void playNoteC(int i_val) {idC = queue4.call_every(1, playNote, i_val);}
-
-void stopPlayNoteC(void) {queue4.cancel(idC);}
-*/
 
 int main(void) {
     thread_add.start(callback(&queue1, &EventQueue::dispatch_forever));
