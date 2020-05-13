@@ -19,8 +19,8 @@
 #include <stdlib.h> // srand   rand, C++ cstdlib
 #include <time.h>  // time(), C++  ctime
 // Gesture parameters
-int mode;
-int scroll;
+int mode = 0;
+int scroll = 0;
 // Event parameters
 int event_num = 0;
 DigitalOut led1(LED1);
@@ -30,60 +30,34 @@ InterruptIn sw3(SW3);
 EventQueue queue1(32 * EVENTS_EVENT_SIZE);
 EventQueue queue2(32 * EVENTS_EVENT_SIZE);
 Thread thread_button;
-Thread thread_switch;
+Thread thread_switchCase;
 // Music parameter
-#define bufferLength (32)
-#define signalLength (1024)
-DA7212 audio;
-int16_t waveform[kAudioTxBufferSize];
-EventQueue queue4(32 * EVENTS_EVENT_SIZE);
+EventQueue queue3(32 * EVENTS_EVENT_SIZE);
 Thread thread_song;
-char serialInBuffer[bufferLength];
-int song_num; //how many songs, address of songs
-int oldsong_num;
-int stoppoint;
-// Should Get from python, but I haven't solve out.
-int song[42]{
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2
-};
-int noteLength[42]{
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2, 
-1, 1, 1, 1, 1, 1, 2
-};
+int song_num = 0;
+int oldsong_num = 0;
 
 // uLCD parameter
-EventQueue queue5(32 * EVENTS_EVENT_SIZE);
+EventQueue queue4(32 * EVENTS_EVENT_SIZE);
 Thread thread_uLCD;
-uLCD_4DGL uLCD(D1, D0, D2); // serial tx, serial rx, reset pin;
 
-void add_thread(){
+
+void add_event(){
     led1 = 0; //red light
+    led2 = 1;
+    wait_us(1000);
+    led1 = 1;
     led2 = 1;
     event_num++;
 }
 
-void reduce_thread(){
+void reduce_event(){
     led1 = 1;
     led2 = 0; //green light
+    wait_us(1000);
+    led1 = 1;
+    led2 = 1;
     event_num--;
-}
-
-void playNote(int freq)
-{
-  for(int a = 0; a < kAudioTxBufferSize; a++)
-  {
-    waveform[a] = (int16_t) (sin((double)a * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
-  }
-  audio.spk.play(waveform, kAudioTxBufferSize);
 }
 
 
@@ -208,19 +182,7 @@ void switch_event(){
         break;
         case 1:
         //play song_list[song_num]
-        for(int k = 0; k < 42; k++)
-       {
-         int length = noteLength[k];
-         while(length--)
-         {
-           // the loop below will play the note for the duration of 1s
-           for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-           {
-            queue4.call(playNote, song[k]);
-          }
-          if(length < 1) wait_us(1000);
-          stoppoint = k;
-    }
+        
   }
         oldsong_num = song_num;
         break;
@@ -263,19 +225,6 @@ void switch_event(){
             case 0:
             //play new song
             //song_list[song_num]???
-            for(int k = 0; k < 42; k++)
-  {
-    int length = noteLength[k];
-    while(length--)
-    {
-      // the loop below will play the note for the duration of 1s
-      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-      {
-        queue4.call(playNote, song[k]);
-      }
-      if(length < 1) wait_us(1000);
-    }
-  }
             break;
             case 1://Quicker
             break;
@@ -290,19 +239,7 @@ void switch_event(){
                 }
                 //play old song
                 //song_list[oldsong_num]???
-                for(int k = stoppoint; k < 42; k++)
-  {
-    int length = noteLength[k];
-    while(length--)
-    {
-      // the loop below will play the note for the duration of 1s
-      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-      {
-        queue4.call(playNote, song[k]);
-      }
-      if(length < 1) wait_us(1000);
-    }
-  }
+                
             break;
             case 2:
             stoppoint = stoppoint+10;
@@ -312,19 +249,6 @@ void switch_event(){
               }
               //play old song
               //song_list[oldsong_num]???
-              for(int k = stoppoint; k < 42; k++)
-  {
-    int length = noteLength[k];
-    while(length--)
-    {
-      // the loop below will play the note for the duration of 1s
-      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-      {
-        queue4.call(playNote, song[k]);
-      }
-      if(length < 1) wait_us(1000);
-    }
-  }
             break;
         }
         break;
@@ -337,19 +261,7 @@ void switch_event(){
         case 6:
        //song_list[song_num]???
        wait_us(5000); //play music slower than circle for 5 sec, let circle can run to beat line after 5 sec
-for(int k = 0; k < 42; k++)
-  {
-    int length = noteLength[k];
-    while(length--)
-    {
-      // the loop below will play the note for the duration of 1s
-      for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-      {
-        queue4.call(playNote, song[k]);
-      }
-      if(length < 1) wait_us(1000);
-    }
-  }
+
         if (event_num == 5 || event_num == 7)
         {
           break; //quit the game
@@ -365,13 +277,13 @@ for(int k = 0; k < 42; k++)
 
 int main(void) {
     thread_button.start(callback(&queue1, &EventQueue::dispatch_forever));
-    thread_switch.start(callback(&queue2, &EventQueue::dispatch_forever));
-    thread_song.start(callback(&queue4, &EventQueue::dispatch_forever));
-    thread_uLCD.start(callback(&queue5, &EventQueue::dispatch_forever));
+    thread_switchCase.start(callback(&queue2, &EventQueue::dispatch_forever));
+    thread_song.start(callback(&queue3, &EventQueue::dispatch_forever));
+    thread_uLCD.start(callback(&queue4, &EventQueue::dispatch_forever));
     // sw2 is used to get to the next step
-    sw2.rise(queue1.event(add_thread));
+    sw2.rise(queue1.event(add_event));
     // sw3 is used to go back to the previous step
-    sw3.rise(queue1.event(reduce_thread));
+    sw3.rise(queue1.event(reduce_event));
     if ((sw2 == 1) && (sw3 == 1) ){
         event_num == 6;
     }
@@ -380,7 +292,7 @@ int main(void) {
     Ticker eventTicker;
     eventTicker.attach(&queue2.event(&switch_event),1.0f);
     Ticker uLCDTicker;
-    uLCDTicker.attach(&queue5.event(&uLCD_print),1.0f);
+    uLCDTicker.attach(&queue4.event(&uLCD_print),1.0f);
     while (1) {wait_us(1000);}
 }
 
