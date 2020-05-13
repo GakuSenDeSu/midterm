@@ -61,7 +61,7 @@ serdev = '/dev/ttyACM0'
 s = serial.Serial(serdev)
 print("Sending signal ...")
 print("It may take about %d seconds ..." % (int(songlength * waitTime)))
-for data in signalTable:
+for data in songs:
   s.write(bytes(formatter(data), 'UTF-8'))
   time.sleep(waitTime)
 s.close()

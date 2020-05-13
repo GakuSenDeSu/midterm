@@ -3,7 +3,7 @@
 #include "DA7212.h"
 
 #define bufferLength (32)
-#define signalLength (1024)
+#define signalLength (256)
 
 DA7212 audio;
 Serial pc(USBTX, USBRX);
@@ -16,7 +16,8 @@ Thread thread_song;
 int idC = 0;
 int song_num = 0;
 int switchCase_num = 0;
-int songitem[6];
+int song1[42], note1[42];
+int l = 0;
 
 float signal[signalLength];
 int16_t waveform[kAudioTxBufferSize];
@@ -25,48 +26,27 @@ int serialCount = 0;
 
 DigitalOut led2(LED2);
 
-void song_list(){
-    int song1[42], song2[32], song3[24], note1[42], note2[32], note3[24];
-    int j;
-    for (j=0;j<42;j++){
-        song1[j] = (int)signal[j]*1000.0;
-    }
-    for (j=42;j<84;j++){
-        note1[j-42] = (int)signal[j]*1000.0;
-    }
-    for (j=84;j<116;j++){
-        song2[j-84] = (int)signal[j]*1000.0;
-    }
-    for (j=116;j<148;j++){
-        note2[j-116] = (int)signal[j]*1000.0;
-    }
-    for (j=148;j<172;j++){
-        song3[j-148] = (int)signal[j]*1000.0;
-    }
-    for (j=172;j<196;j++){
-        note3[j-172] = (int)signal[j]*1000.0;
-    }
-    songitem[0].loadinfo(song1);
-    songitem[1].loadinfo(note1);
-    songitem[2].loadinfo(song2);
-    songitem[3].loadinfo(note2);
-    songitem[4].loadinfo(song3);
-    songitem[5].loadinfo(note3);
+void songList() {
+  for (l = 0; l < 42; l++) {
+    song1[l] = (int)signal[l] * 1000.0;
+  }
+  for (l = 42; l < 84; l++) {
+    note1[l - 42] = (int)signal[l] * 1000.0;
+  }
 }
 
 void loadSignal(void)
 {
-  led2 = 0;
   int i = 0;
   serialCount = 0;
   audio.spk.pause();
-  while(i < signalLength)
+  while (i < signalLength)
   {
-    if(pc.readable())
+    if (pc.readable())
     {
       serialInBuffer[serialCount] = pc.getc();
       serialCount++;
-      if(serialCount == 5)
+      if (serialCount == 5)
       {
         serialInBuffer[serialCount] = '\0';
         signal[i] = (float) atof(serialInBuffer);
@@ -75,55 +55,59 @@ void loadSignal(void)
       }
     }
   }
+  songList();
+  switchCase_num = switchCase_num + 1;
   led2 = 1;
-  song_list;
 }
 
 void playNote(int freq)
 {
-  for(int a = 0; a < kAudioTxBufferSize; a++)
+  for (int a = 0; a < kAudioTxBufferSize; a++)
   {
-    waveform[a] = (int16_t) (sin((double)a * 2. * M_PI/(double) (kAudioSampleFrequency / freq)) * ((1<<16) - 1));
+    waveform[a] = (int16_t) (sin((double)a * 2. * M_PI / (double) (kAudioSampleFrequency / freq)) * ((1 << 16) - 1));
   }
   audio.spk.play(waveform, kAudioTxBufferSize);
 }
 
-void loadSignalHandler(void) {queue3.call(loadSignal);}
-
-void playSong(void) {
-    int k;
-    int klength = sizeof(songitem[song_num]) / sizeof(songitem[song_num][0];
-    for(int k = 0; k < klength; k++)
-       {
-         int length = songitem[song_num + 1][k];
-         while(length--)
-         {
-           // the loop below will play the note for the duration of 1s
-           for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
-           {
-            queue3.call(playNote, songitem[song_num+1][k]);
+void playSong(int song_val) {
+  switch (song_val)
+  {
+    case 0:
+      {
+      int klength1 = sizeof(song1) / sizeof(song1[0]);
+      for (int k = 0; k < klength1; k++)
+      {
+        int length1 = note1[k];
+        while (length1--)
+        {
+          // the loop below will play the note for the duration of 1s
+          for (int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
+          {
+            queue3.call(playNote, song1[k]);
           }
-          if(length < 1) wait_us(1000);
-         }
-       }
+          if (length1 < 1) wait_us(1000);
+        }
+      }
+      }
+      break;
+  }
 }
 
 void stopPlay(void) {
-    
-    queue3.cancel(idC);
-    }
+  queue3.cancel(idC);
+}
 
 void switchCase(void) {
-    switch (switchCase_num)
-    {
+  switch (switchCase_num)
+  {
     case 0:
-        queue3.call(loadSignalHandler);
-        switchCase_num = switchCase_num + 1;
-        break;
+      led2 = 0;
+      queue3.call(loadSignal);
+      break;
     case 1:
-        idC = queue3.call_every(1, playSong);
-        break;
-    }
+      idC = queue3.call_every(1, playSong,song_num);
+      break;
+  }
 }
 
 int main(void)
