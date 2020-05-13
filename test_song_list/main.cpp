@@ -16,6 +16,7 @@ Thread thread_song;
 int idC = 0;
 int song_num = 0;
 int switchCase_num = 0;
+int songitem[6];
 
 float signal[signalLength];
 int16_t waveform[kAudioTxBufferSize];
@@ -23,6 +24,35 @@ char serialInBuffer[bufferLength];
 int serialCount = 0;
 
 DigitalOut led2(LED2);
+
+void song_list(){
+    int song1[42], song2[32], song3[24], note1[42], note2[32], note3[24];
+    int j;
+    for (j=0;j<42;j++){
+        song1[j] = (int)signal[j]*1000.0;
+    }
+    for (j=42;j<84;j++){
+        note1[j-42] = (int)signal[j]*1000.0;
+    }
+    for (j=84;j<116;j++){
+        song2[j-84] = (int)signal[j]*1000.0;
+    }
+    for (j=116;j<148;j++){
+        note2[j-116] = (int)signal[j]*1000.0;
+    }
+    for (j=148;j<172;j++){
+        song3[j-148] = (int)signal[j]*1000.0;
+    }
+    for (j=172;j<196;j++){
+        note3[j-172] = (int)signal[j]*1000.0;
+    }
+    songitem[0].loadinfo(song1);
+    songitem[1].loadinfo(note1);
+    songitem[2].loadinfo(song2);
+    songitem[3].loadinfo(note2);
+    songitem[4].loadinfo(song3);
+    songitem[5].loadinfo(note3);
+}
 
 void loadSignal(void)
 {
@@ -46,36 +76,7 @@ void loadSignal(void)
     }
   }
   led2 = 1;
-  song_list();
-}
-
-void song_list(){
-    int song1[42], song2[42], song3[42], note1[42], note2[42], note3[42];
-    int j;
-    for (j=0;j<42;j++){
-        song1[j] = (int)signal[j]*1000.0;
-    }
-    for (j=42;j<84;j++){
-        note1[j-42] = (int)signal[j]*1000.0;
-    }
-    for (j=84;j<126;j++){
-        song2[j-84] = (int)signal[j]*1000.0;
-    }
-    for (j=126;j<168;j++){
-        note2[j-126] = (int)signal[j]*1000.0;
-    }
-    for (j=168;j<210;j++){
-        song3[j-168] = (int)signal[j]*1000.0;
-    }
-    for (j=210;j<252;j++){
-        note3[j-210] = (int)signal[j]*1000.0;
-    }
-    songlist[0].loadinfo(song1);
-    songlist[1].loadinfo(note1);
-    songlist[2].loadinfo(song2);
-    songlist[3].loadinfo(note2);
-    songlist[4].loadinfo(song3);
-    songlist[5].loadinfo(note3);
+  song_list;
 }
 
 void playNote(int freq)
@@ -91,21 +92,26 @@ void loadSignalHandler(void) {queue3.call(loadSignal);}
 
 void playSong(void) {
     int k;
-    for(int k = 0; k < size(songlist[song_num]); k++)
+    int klength = sizeof(songitem[song_num]) / sizeof(songitem[song_num][0];
+    for(int k = 0; k < klength; k++)
        {
-         int length = songlist[song_num+1][k];
+         int length = songitem[song_num + 1][k];
          while(length--)
          {
            // the loop below will play the note for the duration of 1s
            for(int j = 0; j < kAudioSampleFrequency / kAudioTxBufferSize; ++j)
            {
-            queue3.call(playNote, songlist[song_num+1][k]);
+            queue3.call(playNote, songitem[song_num+1][k]);
           }
           if(length < 1) wait_us(1000);
-          int stoppoint = k;
+         }
+       }
 }
 
-void stopPlay(void) {queue3.cancel(idC);}
+void stopPlay(void) {
+    
+    queue3.cancel(idC);
+    }
 
 void switchCase(void) {
     switch (switchCase_num)
@@ -122,7 +128,7 @@ void switchCase(void) {
 
 int main(void)
 {
-  led = 1;
+  led2 = 1;
   thread_song.start(callback(&queue3, &EventQueue::dispatch_forever));
   sw2.rise(queue3.event(switchCase));
   sw3.rise(queue3.event(stopPlay));

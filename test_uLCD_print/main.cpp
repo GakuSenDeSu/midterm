@@ -34,8 +34,8 @@ case 2:
       uLCD.printf("\nSong List\n");
       uLCD.color(GREEN);
       uLCD.printf("\n1. Little Star\n");
-      uLCD.printf("\n2. Quicker\n");
-      uLCD.printf("\n3. Slower\n");
+      uLCD.printf("\n2. Two Tigers\n");
+      uLCD.printf("\n3. London Bridge\n");
       uLCD.text_width(2); //2X size text
       uLCD.text_height(2);
       uLCD.color(BLUE);
@@ -46,8 +46,8 @@ case 2:
       uLCD.color(GREEN);
       uLCD.printf("\nSong List\n");
       uLCD.printf("\n1. Little Star\n");
-      uLCD.printf("\n2. Quicker\n");
-      uLCD.printf("\n3. Slower\n");
+      uLCD.printf("\n2. Two Tigers\n");
+      uLCD.printf("\n3. London Bridge\n");
       uLCD.text_width(2); //2X size text
       uLCD.text_height(2);
       uLCD.locate(1, 6);
@@ -61,8 +61,8 @@ case 2:
       uLCD.color(GREEN);
       uLCD.printf("\nSong List\n");
       uLCD.printf("\n1. Little Star\n");
-      uLCD.printf("\n2. Quicker\n");
-      uLCD.printf("\n3. Slower\n");
+      uLCD.printf("\n2. Two Tigers\n");
+      uLCD.printf("\n3. London Bridge\n");
       uLCD.text_width(2); //2X size text
       uLCD.text_height(2);
       uLCD.color(BLUE);
@@ -84,8 +84,8 @@ case 3:
           uLCD.color(0xFFFFFF);//1. is white
           uLCD.printf("\n1. Little Star\n");
           uLCD.color(GREEN);
-          uLCD.printf("\n2. Quicker\n");
-          uLCD.printf("\n3. Slower\n");
+          uLCD.printf("\n2. Two Tigers\n");
+          uLCD.printf("\n3. London Bridge\n");
           uLCD.text_width(2); //2X size text
           uLCD.text_height(2);
           uLCD.color(BLUE);
@@ -97,9 +97,9 @@ case 3:
           uLCD.printf("\nSong List\n");
           uLCD.printf("\n1. Little Star\n");
           uLCD.color(0xFFFFFF);//2. is white
-          uLCD.printf("\n2. Quicker\n");
+          uLCD.printf("\n2. Two Tigers\n");
           uLCD.color(GREEN);
-          uLCD.printf("\n3. Slower\n");
+          uLCD.printf("\n3. London Bridge\n");
           uLCD.text_width(2); //2X size text
           uLCD.text_height(2);
           uLCD.color(BLUE);
@@ -109,9 +109,9 @@ case 3:
           uLCD.color(GREEN);
           uLCD.printf("\nSong List\n");
           uLCD.printf("\n1. Little Star\n");
-          uLCD.printf("\n2. Quicker\n");
+          uLCD.printf("\n2. Two Tigers\n");
           uLCD.color(0xFFFFFF);//3. is white
-          uLCD.printf("\n3. Slower\n");
+          uLCD.printf("\n3. London Bridge\n");
           uLCD.text_width(2); //2X size text
           uLCD.text_height(2);
           uLCD.color(BLUE);
@@ -123,8 +123,8 @@ case 3:
       uLCD.color(GREEN);
       uLCD.printf("\nSong List\n");
       uLCD.printf("\n1. Little Star\n");
-      uLCD.printf("\n2. Quicker\n");
-      uLCD.printf("\n3. Slower\n");
+      uLCD.printf("\n2. Two Tigers\n");
+      uLCD.printf("\n3. London Bridge\n");
       uLCD.text_width(2); //2X size text
       uLCD.text_height(2);
       uLCD.locate(1, 6);
@@ -137,8 +137,8 @@ case 3:
       uLCD.color(GREEN);
       uLCD.printf("\nSong List\n");
       uLCD.printf("\n1. Little Star\n");
-      uLCD.printf("\n2. Quicker\n");
-      uLCD.printf("\n3. Slower\n");
+      uLCD.printf("\n2. Two Tigers\n");
+      uLCD.printf("\n3. London Bridge\n");
       uLCD.text_width(2); //2X size text
       uLCD.text_height(2);
       uLCD.color(BLUE);
